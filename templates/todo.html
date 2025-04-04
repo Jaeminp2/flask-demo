@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>To-Do List</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>📝 나의 할 일 목록</h1>
+
+    <!-- ✅ Blueprint 기준 경로 생성 -->
+    <form action="{{ url_for('todo_bp.add_todo') }}" method="POST">
+        <input type="text" name="task" placeholder="할 일을 입력하세요" required>
+        <button type="submit">추가</button>
+    </form>
+
+    <ul>
+        {% for todo in todos %}
+            <li>
+                {{ todo.task }}
+                <!-- ✅ 삭제 링크도 블루프린트 기준으로 -->
+                <a href="{{ url_for('todo_bp.delete', todo_id=todo.id) }}">❌ 삭제</a>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <a href="/"><button>🏠 메인으로</button></a>
+</body>
+</html>
