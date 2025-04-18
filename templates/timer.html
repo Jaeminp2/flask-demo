@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            background-color: #2e2e2e;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding-top: 50px;
+        }
+
+        a.back-home {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #ffffff;
+            text-decoration: none;
+            background-color: #444;
+            padding: 10px 20px;
+            border-radius: 5px;
+        }
+
+        a.back-home:hover {
+            background-color: #666;
+        }
+
+        .time-inputs {
+            margin-bottom: 20px;
+        }
+
+        input {
+            width: 60px;
+            font-size: 20px;
+            text-align: center;
+        }
+
+        button {
+            font-size: 18px;
+            margin: 10px;
+            padding: 10px 20px;
+            background-color: #ffffff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #dddddd;
+        }
+
+        .time-display {
+            font-size: 48px;
+            margin-top: 20px;
+            border: 3px solid #ffffff;
+            display: inline-block;
+            padding: 20px 40px;
+            border-radius: 10px;
+            background-color: #3e3e3e;
+        }
+
+        .button-group {
+            margin-top: 10px;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <a href="/" class="back-home">홈페이지로 나가기</a>
+
+    <h1>시간을 세팅하세요</h1>
+
+    <div class="time-inputs" id="timeInputs">
+        <input type="number" id="minutes" placeholder="분" min="0"> :
+        <input type="number" id="seconds" placeholder="초" min="0" max="59">
+    </div>
+
+    <div class="button-group">
+        <button onclick="startTimer()">시작</button>
+        <button onclick="stopTimer()">정지</button>
+        <button onclick="resetTimer()">리셋</button>
+    </div>
+
+    <div class="time-display" id="timerDisplay">00:00</div>
+
+    <script>
+        let timer;
+        let totalTime = 0;
+        let isRunning = false;
+
+        function startTimer() {
+            if (isRunning) return;
+
+            let minutes = parseInt(document.getElementById('minutes').value) || 0;
+            let seconds = parseInt(document.getElementById('seconds').value) || 0;
+
+            if (totalTime === 0) {
+                totalTime = minutes * 60 + seconds;
+            }
+
+            if (totalTime <= 0) {
+                alert("Please enter a valid time.");
+                return;
+            }
+
+            document.getElementById('timeInputs').classList.add('hidden');
+
+            updateDisplay();
+            isRunning = true;
+
+            timer = setInterval(() => {
+                if (totalTime > 0) {
+                    totalTime--;
+                    updateDisplay();
+                } else {
+                    clearInterval(timer);
+                    isRunning = false;
+                    alert("Time's up!");
+                }
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timer);
+            isRunning = false;
+        }
+
+        function resetTimer() {
+            clearInterval(timer);
+            isRunning = false;
+            totalTime = 0;
+            document.getElementById('timerDisplay').textContent = "00:00";
+            document.getElementById('minutes').value = '';
+            document.getElementById('seconds').value = '';
+            document.getElementById('timeInputs').classList.remove('hidden');
+        }
+
+        function updateDisplay() {
+            let mins = Math.floor(totalTime / 60);
+            let secs = totalTime % 60;
+            document.getElementById('timerDisplay').textContent =
+                String(mins).padStart(2, '0') + ":" + String(secs).padStart(2, '0');
+        }
+    </script>
+
+</body>
+</html>
