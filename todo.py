@@ -24,7 +24,7 @@ def todos():
         return redirect(url_for('todo.todos'))
     
     all_todos = Todo.query.order_by(Todo.id.desc()).all()
-    return render_template('todos.html', todos=all_todos)
+    return render_template('todo.html', todos=all_todos)
 
 # "Completed" toggle
 @todo_bp.route('/todos/<int:todo_id>/toggle', methods=['POST'])
