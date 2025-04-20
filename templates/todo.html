@@ -10,7 +10,7 @@
     {% for t in todos %}
       <li style="list-style:none;">
         <form method="post"
-              action="{{ url_for('toggle', todo_id=t.id) }}"
+              action="{{ url_for('todo.toggle', todo_id=t.id) }}"
               style="display:inline;">
           <input type="checkbox"
                  onChange="this.form.submit()"
