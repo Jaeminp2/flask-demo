@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Todo List</title>
+</head>
+<body>
+  <h1>Todo List</h1>
+  <ul>
+    {% for t in todos %}
+      <li style="list-style:none;">
+        <form method="post"
+              action="{{ url_for('toggle', todo_id=t.id) }}"
+              style="display:inline;">
+          <input type="checkbox"
+                 onChange="this.form.submit()"
+                 {% if t.completed %}checked{% endif %}>
+        </form>
+        <span {% if t.completed %}style="text-decoration:line-through;"{% endif %}>
+          {{ t.text }}
+        </span>
+      </li>
+    {% endfor %}
+  </ul>
+
+  <form method="post">
+    <input type="text" name="todo" placeholder="Enter new todo" required>
+    <input type="submit" value="Add Todo">
+  </form>
+
+  <br><a href="/">Back to Home</a>
+</body>
+</html>
