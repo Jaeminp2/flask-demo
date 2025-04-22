@@ -1,16 +1,8 @@
-from flask import Flask, render_template, request, redirect, url_for
+# timer.py
+from flask import Blueprint, render_template
 
-app = Flask(__name__)
+timer_bp = Blueprint('timer', __name__)  # <-- template_folder 생략
 
-TODO_FILE = "todo.txt"
-
-@app.route('/')
-def home():
-    return render_template('main.html')
-
-@app.route('/timer')
+@timer_bp.route('/timer')
 def timer():
     return render_template('timer.html')
-
-if __name__ == '__main__':
-    app.run(debug=True)
