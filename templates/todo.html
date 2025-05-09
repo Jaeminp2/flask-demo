@@ -4,6 +4,21 @@
   <meta charset="utf-8">
   <title>Todo List</title>
 </head>
+
+<form method="get" action="{{ url_for('todo.todos') }}">
+  <label>Filter by:
+    <select name="category" onchange="this.form.submit()">
+      <option value="">All</option>
+      {% for c in categories %}
+        <option value="{{ c.id }}"
+          {% if c.id == selected %}selected{% endif %}>
+          {{ c.name }}
+        </option>
+      {% endfor % }
+    </select>
+  </label>
+</form>
+
 <body>
   <h1>Todo List</h1>
   <ul>
@@ -25,6 +40,12 @@
 
   <form method="post">
     <input type="text" name="todo" placeholder="Enter new todo" required>
+    <select name="category_id">
+      <option value="">No category</option>
+      {% for c in categories %}
+        <option value="{{ c.id }}">{{ c.name }}</option>
+      {% endfor %}
+    </select>
     <input type="submit" value="Add Todo">
   </form>
 
