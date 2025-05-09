@@ -1,4 +1,4 @@
-from todo_models import db, Todo
+from todo_models import db, Todo, Category
 from flask import Blueprint, request, redirect, url_for, flash, render_template
 
 todo_bp = Blueprint('todo', __name__)
@@ -10,6 +10,26 @@ todo_bp = Blueprint('todo', __name__)
 
 #     def __repr__(self):
 #         return f"<Todo: {self.text} completed={self.completed}>"
+
+# Add/delete categories
+@todo_bp.route('/categories', methods=['GET', 'POST'])
+def categories():
+    if request.method == 'POST':
+        name = request.form.get('name')
+        if name:
+            db.session.add(Category(name=name))
+            db.session.commit()
+        return redirect(url_for('todo.categories'))
+    
+    cats = Category.query.order_by(Category.name).all()
+    return render_template('categories.html', categories=cats)
+
+@todo_bp.route('/categories', methods=['GET', 'POST'])
+def delete_category(cat_id):
+    cat = Category.query.get_or_404(cat_id)
+    db.session.delete(cat)
+    db.session.commit()
+    return redirect(url_for('todo_categories'))
 
 # View and add tasks
 @todo_bp.route('/todos', methods=['GET', 'POST'])
