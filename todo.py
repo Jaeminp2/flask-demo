@@ -3,26 +3,17 @@ from flask import Blueprint, request, redirect, url_for, flash, render_template
 
 todo_bp = Blueprint('todo', __name__)
 
-# class Todo(db.Model):
-#     id = db.Column(db.Integer, primary_key=True)
-#     text = db.Column(db.String(255), nullable=False)
-#     completed = db.Column(db.Boolean, default=False)
-
-#     def __repr__(self):
-#         return f"<Todo: {self.text} completed={self.completed}>"
-
 # Add/delete categories
-@todo_bp.route('/categories', methods=['GET', 'POST'])
-def categories():
-    if request.method == 'POST':
-        name = request.form.get('name')
-        if name:
-            db.session.add(Category(name=name))
-            db.session.commit()
-        return redirect(url_for('todo.categories'))
-    
-    cats = Category.query.order_by(Category.name).all()
-    return render_template('categories.html', categories=cats)
+@todo_bp.route('/categories', methods=['POST'])
+def add_category():
+    name = request.form.get('category_name', '').strip()
+    if name and not Category.query.filter_by(name=name).first():
+        db.session.add(Category(name=name))
+        db.session.commit()
+        flash(f'Category "{name}" added.')
+    else:
+        flash('Invalid or duplicate category.')
+    return redirect(url_for('todo.todos'))
 
 @todo_bp.route('/categories', methods=['GET', 'POST'])
 def delete_category(cat_id):
@@ -34,18 +25,6 @@ def delete_category(cat_id):
 # View and add tasks
 @todo_bp.route('/todos', methods=['GET', 'POST'])
 def todos():
-    # if request.method == 'POST':
-    #     new_text = request.form.get('todo')
-    #     if new_text:
-    #         item = Todo(text=new_text)
-    #         db.session.add(item)
-    #         db.session.commit()
-    #         flash('Task added successfully')
-    #     return redirect(url_for('todo.todos'))
-    
-    # all_todos = Todo.query.order_by(Todo.id.desc()).all()
-    # return render_template('todo.html', todos=all_todos)
-
     if request.method == 'POST':
         text = request.form['todo']
         cat_id = request.form.get('category_id')
