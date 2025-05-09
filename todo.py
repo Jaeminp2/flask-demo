@@ -34,17 +34,39 @@ def delete_category(cat_id):
 # View and add tasks
 @todo_bp.route('/todos', methods=['GET', 'POST'])
 def todos():
-    if request.method == 'POST':
-        new_text = request.form.get('todo')
-        if new_text:
-            item = Todo(text=new_text)
-            db.session.add(item)
-            db.session.commit()
-            flash('Task added successfully')
-        return redirect(url_for('todo.todos'))
+    # if request.method == 'POST':
+    #     new_text = request.form.get('todo')
+    #     if new_text:
+    #         item = Todo(text=new_text)
+    #         db.session.add(item)
+    #         db.session.commit()
+    #         flash('Task added successfully')
+    #     return redirect(url_for('todo.todos'))
     
-    all_todos = Todo.query.order_by(Todo.id.desc()).all()
-    return render_template('todo.html', todos=all_todos)
+    # all_todos = Todo.query.order_by(Todo.id.desc()).all()
+    # return render_template('todo.html', todos=all_todos)
+
+    if request.method == 'POST':
+        text = request.form['todo']
+        cat_id = request.form.get('category_id')
+        item = Todo(text=text, category_id=cat_id or None)
+        db.session.add(item)
+        db.session.commit()
+        flash('Task added')
+        return redirect(url_for('todo.todos', category=cat_id))
+
+    # GET: filter by category if provided
+    cat_filter = request.args.get('category', type=int)
+    query = Todo.query
+    if cat_filter:
+        query = query.filter_by(category_id=cat_filter)
+    all_todos = query.order_by(Todo.id.desc()).all()
+
+    categories = Category.query.order_by(Category.name).all()
+    return render_template('todo.html',
+                           todos=all_todos,
+                           categories=categories,
+                           selected=cat_filter)
 
 # "Completed" toggle
 @todo_bp.route('/todos/<int:todo_id>/toggle', methods=['POST'])
