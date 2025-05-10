@@ -2,32 +2,63 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Todo List</title>
+  <title>Todo by Category</title>
 </head>
 <body>
   <h1>Todo List</h1>
-  <ul>
-    {% for t in todos %}
-      <li style="list-style:none;">
-        <form method="post"
-              action="{{ url_for('todo.toggle', todo_id=t.id) }}"
-              style="display:inline;">
-          <input type="checkbox"
-                 onChange="this.form.submit()"
-                 {% if t.completed %}checked{% endif %}>
-        </form>
-        <span {% if t.completed %}style="text-decoration:line-through;"{% endif %}>
-          {{ t.text }}
-        </span>
-      </li>
-    {% endfor %}
-  </ul>
 
-  <form method="post">
-    <input type="text" name="todo" placeholder="Enter new todo" required>
-    <input type="submit" value="Add Todo">
+  {# 1) Per-category sections #}
+  {% for c in categories %}
+    <h2>{{ c.name }}
+      {# delete category button #}
+      <form method="post"
+            action="{{ url_for('todo.delete_category', cat_id=c.id) }}"
+            style="display:inline;">
+        <button type="submit" title="Delete {{ c.name }}">✕</button>
+      </form>
+    </h2>
+    <ul>
+      {% for t in c.todos %}
+        <li>
+          {# toggle completion #}
+          <form method="post"
+                action="{{ url_for('todo.toggle', todo_id=t.id) }}"
+                style="display:inline;">
+            <input type="checkbox"
+                   onChange="this.form.submit()"
+                   {% if t.completed %}checked{% endif %}>
+          </form>
+          <span {% if t.completed %}style="text-decoration:line-through"{% endif %}>
+            {{ t.text }}
+          </span>
+          {# delete task button #}
+          <form method="post"
+                action="{{ url_for('todo.delete_task', todo_id=t.id) }}"
+                style="display:inline; margin-left:8px;">
+            <button type="submit" title="Delete task">🗑</button>
+          </form>
+        </li>
+      {% endfor %}
+      {# inline add-task form #}
+      <li>
+        <form method="post" action="{{ url_for('todo.todos') }}">
+          <input type="hidden" name="category_id" value="{{ c.id }}">
+          <input type="text" name="todo" placeholder="New task in {{ c.name }}" required>
+          <button type="submit">Add</button>
+        </form>
+      </li>
+    </ul>
+  {% endfor %}
+
+  <hr>
+
+  {# 2) Global “add category” form #}
+  <h3>Add new category</h3>
+  <form method="post" action="{{ url_for('todo.add_category') }}">
+    <input type="text" name="category_name" placeholder="Category name" required>
+    <button type="submit">Add Category</button>
   </form>
 
-  <br><a href="/">Back to Home</a>
+  <p><a href="/">Back to Home</a></p>
 </body>
 </html>
