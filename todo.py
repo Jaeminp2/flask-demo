@@ -15,37 +15,38 @@ def add_category():
         flash('Invalid or duplicate category.')
     return redirect(url_for('todo.todos'))
 
-@todo_bp.route('/categories', methods=['GET', 'POST'])
+@todo_bp.route('/categories/<int:cat_id>/delete', methods=['POST'])
 def delete_category(cat_id):
     cat = Category.query.get_or_404(cat_id)
     db.session.delete(cat)
     db.session.commit()
-    return redirect(url_for('todo_categories'))
+    flash(f'Category "{cat.name}" deleted.')
+    return redirect(url_for('todo.todos'))
 
 # View and add tasks
 @todo_bp.route('/todos', methods=['GET', 'POST'])
 def todos():
     if request.method == 'POST':
-        text = request.form['todo']
-        cat_id = request.form.get('category_id')
-        item = Todo(text=text, category_id=cat_id or None)
-        db.session.add(item)
-        db.session.commit()
-        flash('Task added')
-        return redirect(url_for('todo.todos', category=cat_id))
+        text   = request.form['todo'].strip()
+        cat_id = request.form.get('category_id', type=int)
+        if text:
+            db.session.add(Todo(text=text, category_id=cat_id or None))
+            db.session.commit()
+            flash('Task added.')
+        return redirect(url_for('todo.todos'))
 
-    # GET: filter by category if provided
-    cat_filter = request.args.get('category', type=int)
-    query = Todo.query
-    if cat_filter:
-        query = query.filter_by(category_id=cat_filter)
-    all_todos = query.order_by(Todo.id.desc()).all()
+    # For GET, fetch *all* categories (with their todos via relationship)
+    cats = Category.query.order_by(Category.name).all()
+    return render_template('todo.html', categories=cats)
 
-    categories = Category.query.order_by(Category.name).all()
-    return render_template('todo.html',
-                           todos=all_todos,
-                           categories=categories,
-                           selected=cat_filter)
+# Delete task
+@todo_bp.route('/todos/<int:todo_id>/delete', methods=['POST'])
+def delete_task(todo_id):
+    task = Todo.query.get_or_404(todo_id)
+    db.session.delete(task)
+    db.session.commit()
+    flash(f'Task "{task.text}" deleted.')
+    return redirect(url_for('todo.todos'))
 
 # "Completed" toggle
 @todo_bp.route('/todos/<int:todo_id>/toggle', methods=['POST'])
