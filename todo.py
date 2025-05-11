@@ -1,30 +1,52 @@
-from todo_models import db, Todo
+from todo_models import db, Todo, Category
 from flask import Blueprint, request, redirect, url_for, flash, render_template
 
 todo_bp = Blueprint('todo', __name__)
 
-# class Todo(db.Model):
-#     id = db.Column(db.Integer, primary_key=True)
-#     text = db.Column(db.String(255), nullable=False)
-#     completed = db.Column(db.Boolean, default=False)
+# Add/delete categories
+@todo_bp.route('/categories', methods=['POST'])
+def add_category():
+    name = request.form.get('category_name', '').strip()
+    if name and not Category.query.filter_by(name=name).first():
+        db.session.add(Category(name=name))
+        db.session.commit()
+        flash(f'Category "{name}" added.')
+    else:
+        flash('Invalid or duplicate category.')
+    return redirect(url_for('todo.todos'))
 
-#     def __repr__(self):
-#         return f"<Todo: {self.text} completed={self.completed}>"
+@todo_bp.route('/categories/<int:cat_id>/delete', methods=['POST'])
+def delete_category(cat_id):
+    cat = Category.query.get_or_404(cat_id)
+    db.session.delete(cat)
+    db.session.commit()
+    flash(f'Category "{cat.name}" deleted.')
+    return redirect(url_for('todo.todos'))
 
 # View and add tasks
 @todo_bp.route('/todos', methods=['GET', 'POST'])
 def todos():
     if request.method == 'POST':
-        new_text = request.form.get('todo')
-        if new_text:
-            item = Todo(text=new_text)
-            db.session.add(item)
+        text   = request.form['todo'].strip()
+        cat_id = request.form.get('category_id', type=int)
+        if text:
+            db.session.add(Todo(text=text, category_id=cat_id or None))
             db.session.commit()
-            flash('Task added successfully')
+            flash('Task added.')
         return redirect(url_for('todo.todos'))
-    
-    all_todos = Todo.query.order_by(Todo.id.desc()).all()
-    return render_template('todo.html', todos=all_todos)
+
+    # For GET, fetch *all* categories (with their todos via relationship)
+    cats = Category.query.order_by(Category.name).all()
+    return render_template('todo.html', categories=cats)
+
+# Delete task
+@todo_bp.route('/todos/<int:todo_id>/delete', methods=['POST'])
+def delete_task(todo_id):
+    task = Todo.query.get_or_404(todo_id)
+    db.session.delete(task)
+    db.session.commit()
+    flash(f'Task "{task.text}" deleted.')
+    return redirect(url_for('todo.todos'))
 
 # "Completed" toggle
 @todo_bp.route('/todos/<int:todo_id>/toggle', methods=['POST'])
