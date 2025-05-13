@@ -1,7 +1,7 @@
 # timer.py
 from flask import Blueprint, render_template
 
-timer_bp = Blueprint('timer', __name__)  # <-- template_folder 생략
+timer_bp = Blueprint('timer', __name__)
 
 @timer_bp.route('/timer')
 def timer():

@@ -13,7 +13,7 @@ def add_category():
         flash(f'Category "{name}" added.')
     else:
         flash('Invalid or duplicate category.')
-    return redirect(url_for('todo.todos'))
+    return redirect('/')
 
 @todo_bp.route('/categories/<int:cat_id>/delete', methods=['POST'])
 def delete_category(cat_id):
@@ -21,23 +21,18 @@ def delete_category(cat_id):
     db.session.delete(cat)
     db.session.commit()
     flash(f'Category "{cat.name}" deleted.')
-    return redirect(url_for('todo.todos'))
+    return redirect('/')
 
 # View and add tasks
-@todo_bp.route('/todos', methods=['GET', 'POST'])
+@todo_bp.route('/todos', methods=['POST'])
 def todos():
-    if request.method == 'POST':
-        text   = request.form['todo'].strip()
-        cat_id = request.form.get('category_id', type=int)
-        if text:
-            db.session.add(Todo(text=text, category_id=cat_id or None))
-            db.session.commit()
-            flash('Task added.')
-        return redirect(url_for('todo.todos'))
-
-    # For GET, fetch *all* categories (with their todos via relationship)
-    cats = Category.query.order_by(Category.name).all()
-    return render_template('todo.html', categories=cats)
+    text   = request.form['todo'].strip()
+    cat_id = request.form.get('category_id', type=int)
+    if text:
+        db.session.add(Todo(text=text, category_id=cat_id or None))
+        db.session.commit()
+        flash('Task added.')
+    return redirect('/')
 
 # Delete task
 @todo_bp.route('/todos/<int:todo_id>/delete', methods=['POST'])
@@ -46,7 +41,7 @@ def delete_task(todo_id):
     db.session.delete(task)
     db.session.commit()
     flash(f'Task "{task.text}" deleted.')
-    return redirect(url_for('todo.todos'))
+    return redirect('/')
 
 # "Completed" toggle
 @todo_bp.route('/todos/<int:todo_id>/toggle', methods=['POST'])
@@ -54,4 +49,4 @@ def toggle(todo_id):
     t = Todo.query.get_or_404(todo_id)
     t.completed = not t.completed
     db.session.commit()
-    return redirect(url_for('todo.todos'))
+    return redirect('/')

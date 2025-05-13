@@ -1,48 +1,121 @@
-<!-- templates/main.html -->
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <title>기능 선택</title>
-    <style>
-        body {
-            background-color: #2e2e2e;
-            color: white;
-            text-align: center;
-            font-family: Arial, sans-serif;
-            padding-top: 100px;
-        }
-        h1 {
-            margin-bottom: 40px;
-        }
-        .button-container {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-        }
-        .feature-button {
-            background-color: #444;
-            color: white;
-            padding: 20px 40px;
-            font-size: 20px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-            text-decoration: none;
-        }
-        .feature-button:hover {
-            background-color: #666;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title> Latte Learn </title>
+  <style>
+    body {
+      background-color: #2e2e2e;
+      color: white;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    .todo-section {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      width: 35%;
+    }
+
+    .timer-section {
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 300px;
+    }
+
+    .music-section {
+      position: absolute;
+      bottom: 40px;
+      right: 20px;
+      width: 320px;
+    }
+
+    #statsBox {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: #333;
+      padding: 15px;
+      border-radius: 8px;
+      color: white;
+      min-width: 180px;
+    }
+
+    #statsBox h3 {
+      margin-top: 0;
+    }
+  </style>
 </head>
 <body>
 
-    <h1>사용할 기능을 선택하세요</h1>
-    <div class="button-container">
-        <a href="/todos" class="feature-button">✅ To-Do 리스트</a>
-        <a href="/timer" class="feature-button">⏱️ 타이머</a>
-    </div>
+  <h1 style="text-align: center; padding: 20px;">Latte Learn</h1>
+
+  <div class="todo-section">
+    {% include "todo_embed.html" %}
+  </div>
+
+  <div class="timer-section">
+    {% include "timer_embed.html" %}
+  </div>
+
+  <div class="music-section">
+    {% include "song_embed.html" %}
+  </div>
+
+  <div id="statsBox">
+    <h3>공부 시간</h3>
+    <table id="statsTable">
+      <tr><td>총합:</td><td id="stat-total">0분</td></tr>
+      <tr><td>미지정:</td><td id="stat-uncat">0분</td></tr>
+    </table>
+  </div>
+
+  <script>
+    let lastStats = null;
+    let elapsedTime = 0;
+    let selectedCategoryId = null;
+
+    function updateStatsTable() {
+      fetch('/stats')
+        .then(res => res.json())
+        .then(data => {
+          lastStats = data;
+          renderStats(data.total, data.uncategorized, data.by_category);
+        });
+    }
+
+    function renderStats(baseTotal, baseUncat, basePerCategory) {
+      const totalEl = document.getElementById('stat-total');
+      const uncatEl = document.getElementById('stat-uncat');
+      const table = document.getElementById('statsTable');
+
+      const extra = elapsedTime || 0;
+
+      totalEl.textContent = Math.floor((baseTotal + extra) / 60) + "분";
+      uncatEl.textContent = Math.floor((baseUncat + (selectedCategoryId ? 0 : extra)) / 60) + "분";
+
+      while (table.rows.length > 2) {
+        table.deleteRow(2);
+      }
+
+      basePerCategory.forEach(item => {
+        const add = (selectedCategoryId && item.name === getSelectedCategoryName()) ? extra : 0;
+        const row = table.insertRow();
+        row.innerHTML = `<td>${item.name}:</td><td>${Math.floor((item.duration + add) / 60)}분</td>`;
+      });
+    }
+
+    function getSelectedCategoryName() {
+      const selected = document.querySelector('.category.selected');
+      return selected ? selected.textContent.trim() : null;
+    }
+
+    document.addEventListener('DOMContentLoaded', updateStatsTable);
+  </script>
 
 </body>
 </html>

@@ -1,0 +1,79 @@
+<div>
+  <h2>To-Do 리스트</h2>
+
+  {% for c in categories %}
+    <h3 class="category" data-cat-id="{{ c.id }}">{{ c.name }}
+      <form method="post" action="{{ url_for('todo.delete_category', cat_id=c.id) }}" style="display:inline;">
+        <button type="submit">✕</button>
+      </form>
+    </h3>
+    <ul>
+      {% for t in c.todos %}
+        <li>
+          <form method="post" action="{{ url_for('todo.toggle', todo_id=t.id) }}" style="display:inline;">
+            <input type="checkbox" onChange="this.form.submit()" {% if t.completed %}checked{% endif %}>
+          </form>
+          <span {% if t.completed %}style="text-decoration:line-through"{% endif %}>{{ t.text }}</span>
+          <form method="post" action="{{ url_for('todo.delete_task', todo_id=t.id) }}" style="display:inline; margin-left:8px;">
+            <button type="submit">🗑</button>
+          </form>
+        </li>
+      {% endfor %}
+      <li>
+        <form method="post" action="{{ url_for('todo.todos') }}">
+          <input type="hidden" name="category_id" value="{{ c.id }}">
+          <input type="text" name="todo" placeholder="할 일 추가" required>
+          <button type="submit">추가</button>
+        </form>
+      </li>
+    </ul>
+  {% endfor %}
+
+  <form method="post" action="{{ url_for('todo.add_category') }}">
+    <input type="text" name="category_name" placeholder="새 카테고리 추가" required>
+    <button type="submit">카테고리 추가</button>
+  </form>
+</div>
+
+<style>
+  .category {
+    display: inline-block;
+    cursor: pointer;
+    padding: 6px 12px;
+    border-radius: 6px;
+    background-color: #3c3c3c;
+    margin-bottom: 4px;
+    transition: background-color 0.2s ease;
+  }
+
+  .category:hover {
+    background-color: #555;
+  }
+
+  .category.selected {
+    background-color: #2c89ff;
+  }
+</style>
+
+<script>
+  let selectedCategoryId = null;
+
+  document.querySelectorAll('.category').forEach(el => {
+    el.addEventListener('click', () => {
+      const clickedId = el.dataset.catId;
+
+      if (selectedCategoryId === clickedId) {
+        // 이미 선택된 카테고리를 다시 클릭한 경우: 선택 해제
+        el.classList.remove('selected');
+        selectedCategoryId = null;
+        console.log("Category deselected");
+      } else {
+        // 새 카테고리 선택
+        document.querySelectorAll('.category').forEach(c => c.classList.remove('selected'));
+        el.classList.add('selected');
+        selectedCategoryId = clickedId;
+        console.log("Selected category:", selectedCategoryId);
+      }
+    });
+  });
+</script>

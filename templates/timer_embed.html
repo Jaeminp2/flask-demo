@@ -1,0 +1,107 @@
+<div style="text-align:center;">
+  <h2>⏱️ 타이머</h2>
+  <div id="timeInputs">
+    <input type="number" id="minutes" value="25" min="0"> :
+    <input type="number" id="seconds" value="0" min="0" max="59">
+  </div>
+  <div style="margin:10px;">
+    <button onclick="startTimer()">시작</button>
+    <button onclick="stopTimer()">정지</button>
+    <button onclick="resetTimer()">리셋</button>
+  </div>
+  <div id="timerDisplay" style="font-size:2em;">00:00</div>
+</div>
+<script>
+  let timer;
+  let totalTime = 0;
+  let elapsedTime = 0;   // 누적된 시간
+  let isRunning = false;
+
+  function startTimer() {
+    if (isRunning) return;
+
+    if (totalTime === 0) {
+      let minutes = parseInt(document.getElementById('minutes').value) || 0;
+      let seconds = parseInt(document.getElementById('seconds').value) || 0;
+      totalTime = minutes * 60 + seconds;
+    }
+
+    if (totalTime <= 0) {
+      alert("시간을 설정해주세요.");
+      return;
+    }
+
+    document.getElementById('timeInputs').style.display = "none";
+    isRunning = true;
+
+    timer = setInterval(() => {
+      if (totalTime > 0) {
+        totalTime--;
+        elapsedTime++;
+        updateDisplay();
+      } else {
+        clearInterval(timer);
+        isRunning = false;
+        updateDisplay();
+        sendStudyLog(elapsedTime);
+        alert("시간 종료!");
+        elapsedTime = 0;
+        totalTime = 0;
+        resetUI();
+      }
+    }, 1000);
+  }
+
+  function stopTimer() {
+    clearInterval(timer);
+    isRunning = false;
+  }
+
+  function resetTimer() {
+    clearInterval(timer);
+    isRunning = false;
+
+    if (elapsedTime > 0) {
+      sendStudyLog(elapsedTime);
+    }
+
+    totalTime = 0;
+    elapsedTime = 0;
+    updateDisplay();
+    resetUI();
+  }
+
+  function resetUI() {
+    document.getElementById('timerDisplay').textContent = "00:00";
+    document.getElementById('minutes').value = '25';
+    document.getElementById('seconds').value = '0';
+    document.getElementById('timeInputs').style.display = "block";
+  }
+
+  function updateDisplay() {
+    let m = String(Math.floor(totalTime / 60)).padStart(2, '0');
+    let s = String(totalTime % 60).padStart(2, '0');
+    document.getElementById('timerDisplay').textContent = `${m}:${s}`;
+  }
+
+  function sendStudyLog(durationInSeconds) {
+    fetch("/log", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        duration: durationInSeconds,
+        category_id: selectedCategoryId || null
+      })
+    }).then(res => {
+      if (res.ok) {
+        console.log(` ${durationInSeconds}초 공부 기록 완료`);
+      } else {
+        console.error("❌ 공부 기록 실패");
+      }
+    }).catch(err => {
+      console.error("❌ 서버 오류", err);
+    });
+  }
+</script>
