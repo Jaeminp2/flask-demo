@@ -66,6 +66,11 @@
         .hidden {
             display: none;
         }
+
+        .status {
+            font-size: 24px;
+            margin-top: 15px;
+        }
     </style>
 </head>
 <body>
@@ -85,33 +90,38 @@
         <button onclick="resetTimer()">리셋</button>
     </div>
 
-    <div class="time-display" id="timerDisplay">00:00</div>
+    <div class="time-display" id="timerDisplay">25:00</div>
+    <div class="status" id="statusText">Work Time</div>
 
     <script>
         let timer;
         let totalTime = 0;
         let isRunning = false;
+        let isWorkTime = true;
+        let firstStart = true;
+        let userWorkMinutes = 25;
+        let userWorkSeconds = 0;
 
         function startTimer() {
             if (isRunning) return;
 
-            let minutes = parseInt(document.getElementById('minutes').value) || 0;
-            let seconds = parseInt(document.getElementById('seconds').value) || 0;
-
-            if (totalTime === 0) {
-                if (minutes === 0 && seconds === 0) {
-                    totalTime = 25 * 60;
-                } else {
-                    totalTime = minutes * 60 + seconds;
-                }
+            // On first start, use user input
+            if (firstStart) {
+                const minutes = parseInt(document.getElementById('minutes').value) || 0;
+                const seconds = parseInt(document.getElementById('seconds').value) || 0;
+                totalTime = minutes * 60 + seconds;
+                userWorkMinutes = minutes;
+                userWorkSeconds = seconds;
+                firstStart = false;
             }
 
+            // If totalTime is zero for some reason, fallback
             if (totalTime <= 0) {
-                alert("Please enter a valid time.");
-                return;
+                totalTime = isWorkTime ? (userWorkMinutes * 60 + userWorkSeconds) : 5 * 60;
             }
 
             document.getElementById('timeInputs').classList.add('hidden');
+            document.getElementById('statusText').textContent = isWorkTime ? "Work Time" : "Break Time";
 
             updateDisplay();
             isRunning = true;
@@ -123,7 +133,13 @@
                 } else {
                     clearInterval(timer);
                     isRunning = false;
-                    alert("Time's up!");
+                    alert(isWorkTime ? "수고하셨습니다! 이제 휴식시간 입니다." : "휴식시간 끝!");
+                    isWorkTime = !isWorkTime;
+                    totalTime = isWorkTime ? (userWorkMinutes * 60 + userWorkSeconds) : 5 * 60;
+                    document.getElementById('statusText').textContent = isWorkTime ? "공부시간" : "휴식시간";
+                    updateDisplay();
+
+                    startTimer();
                 }
             }, 1000);
         }
@@ -136,8 +152,11 @@
         function resetTimer() {
             clearInterval(timer);
             isRunning = false;
+            isWorkTime = true;
+            firstStart = true;
             totalTime = 0;
-            document.getElementById('timerDisplay').textContent = "00:00";
+            document.getElementById('statusText').textContent = "Work Time";
+            document.getElementById('timerDisplay').textContent = "25:00";
             document.getElementById('minutes').value = '25';
             document.getElementById('seconds').value = '0';
             document.getElementById('timeInputs').classList.remove('hidden');
@@ -149,6 +168,11 @@
             document.getElementById('timerDisplay').textContent =
                 String(mins).padStart(2, '0') + ":" + String(secs).padStart(2, '0');
         }
+
+        window.onload = () => {
+            totalTime = 25 * 60;
+            updateDisplay();
+        };
     </script>
 
 </body>
