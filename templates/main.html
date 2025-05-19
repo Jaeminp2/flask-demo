@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title> Latte Learn </title>
+  <title>Latte Learn</title>
   <style>
     body {
       background-color: #2e2e2e;
@@ -24,7 +24,7 @@
       bottom: 40px;
       left: 50%;
       transform: translateX(-50%);
-      width: 300px;
+      text-align: center;
     }
 
     .music-section {
@@ -34,20 +34,148 @@
       width: 320px;
     }
 
-    #statsBox {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      background: #333;
-      padding: 15px;
-      border-radius: 8px;
-      color: white;
-      min-width: 180px;
+    input[type="number"], input[type="text"] {
+      font-size: 16px;
     }
 
-    #statsBox h3 {
-      margin-top: 0;
+    button {
+      font-size: 16px;
+      margin: 5px;
+      padding: 8px 16px;
+      background-color: #ffffff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
     }
+
+    button:hover {
+      background-color: #dddddd;
+    }
+
+    .time-display {
+      font-size: 36px;
+      margin-top: 10px;
+      border: 3px solid #ffffff;
+      display: inline-block;
+      padding: 15px 30px;
+      border-radius: 10px;
+      background-color: #3e3e3e;
+    }
+
+    .status {
+      font-size: 20px;
+      margin-top: 10px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .category {
+      cursor: pointer;
+      padding: 4px 8px;
+      display: inline-block;
+      border-radius: 5px;
+    }
+
+    .category.selected {
+      background-color: #ffd966;
+      color: #222;
+    }
+
+    .player {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 24px 28px;
+      width: 320px;
+      box-sizing: border-box;
+      text-align: center;
+      border: 1px solid #e0e0e0;
+      font-family: 'Inter', sans-serif;
+      color: #222;
+    }
+
+    .player .title {
+      font-size: 16px;
+      font-weight: 500;
+      margin-bottom: 16px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .player input[type="range"] {
+      width: 100%;
+      -webkit-appearance: none;
+      background: transparent;
+    }
+
+    .player input[type="range"]::-webkit-slider-runnable-track {
+      height: 4px;
+      background: #ccc;
+      border-radius: 2px;
+    }
+
+    .player input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 12px;
+      height: 12px;
+      background: #555;
+      border-radius: 50%;
+      margin-top: -4px;
+    }
+
+    .player .time {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #666;
+      margin-top: 4px;
+    }
+
+    .player .controls {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 20px;
+    }
+
+    .player .controls button {
+      background: none;
+      border: none;
+      font-size: 20px;
+      color: #333;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .player .controls button:hover {
+      color: #000;
+    }
+
+      #statsBox {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: #333;
+    padding: 15px;
+    border-radius: 8px;
+    color: white;
+    min-width: 180px;
+  }
+  #statsBox h3 {
+    margin-top: 0;
+    font-size: 18px;
+    border-bottom: 1px solid #555;
+    padding-bottom: 5px;
+  }
+  #statsBox table {
+    width: 100%;
+    font-size: 14px;
+    margin-top: 10px;
+  }
+  #statsBox td {
+    padding: 2px 4px;
+  }
   </style>
 </head>
 <body>
@@ -55,67 +183,269 @@
   <h1 style="text-align: center; padding: 20px;">Latte Learn</h1>
 
   <div class="todo-section">
-    {% include "todo_embed.html" %}
+    <h1>Todo List</h1>
+    {% for c in categories %}
+      <h2 class="category" data-cid="{{ c.id }}">{{ c.name }}
+        <form method="post" action="{{ url_for('todo.delete_category', cat_id=c.id) }}" style="display:inline;">
+          <button type="submit" title="Delete {{ c.name }}">✕</button>
+        </form>
+      </h2>
+      <ul>
+        {% for t in c.todos %}
+          <li>
+            <form method="post" action="{{ url_for('todo.toggle', todo_id=t.id) }}" style="display:inline;">
+              <input type="checkbox" onChange="this.form.submit()" {% if t.completed %}checked{% endif %}>
+            </form>
+            <span {% if t.completed %}style="text-decoration:line-through"{% endif %}>{{ t.text }}</span>
+            <form method="post" action="{{ url_for('todo.delete_task', todo_id=t.id) }}" style="display:inline; margin-left:8px;">
+              <button type="submit" title="Delete task">🗑</button>
+            </form>
+          </li>
+        {% endfor %}
+        <li>
+          <form method="post" action="{{ url_for('todo.todos') }}">
+            <input type="hidden" name="category_id" value="{{ c.id }}">
+            <input type="text" name="todo" placeholder="New task in {{ c.name }}" required>
+            <button type="submit">Add</button>
+          </form>
+        </li>
+      </ul>
+    {% endfor %}
+
+    <hr>
+    <h3>Add new category</h3>
+    <form method="post" action="{{ url_for('todo.add_category') }}">
+      <input type="text" name="category_name" placeholder="Category name" required>
+      <button type="submit">Add Category</button>
+    </form>
   </div>
 
   <div class="timer-section">
-    {% include "timer_embed.html" %}
+    <h2>시간을 세팅하세요</h2>
+    <div class="time-inputs" id="timeInputs">
+      <input type="number" id="minutes" placeholder="분" min="0" value="25"> :
+      <input type="number" id="seconds" placeholder="초" min="0" max="59" value="0">
+    </div>
+
+    <div class="button-group">
+      <button id="startBtn">시작</button>
+      <button id="stopBtn">정지</button>
+      <button id="resetBtn">리셋</button>
+    </div>
+
+    <div class="time-display" id="timerDisplay">25:00</div>
+    <div class="status" id="statusText">Work Time</div>
   </div>
 
   <div class="music-section">
-    {% include "song_embed.html" %}
+    <div class="player">
+      <div class="title" id="nowPlaying">Now Playing:</div>
+      <input type="range" id="progressBar" value="0">
+      <div class="time">
+        <span id="currentTime">0:00</span>
+        <span id="totalTime">0:00</span>
+      </div>
+      <audio id="player">
+        <source id="audioSource" src="" type="audio/mpeg">
+      </audio>
+      <div class="controls">
+        <button onclick="prevSong()">⏮</button>
+        <button onclick="togglePlay()">⏯</button>
+        <button onclick="nextSong()">⏭</button>
+      </div>
+    </div>
   </div>
 
   <div id="statsBox">
     <h3>공부 시간</h3>
     <table id="statsTable">
-      <tr><td>총합:</td><td id="stat-total">0분</td></tr>
-      <tr><td>미지정:</td><td id="stat-uncat">0분</td></tr>
+      <tr><td>일반:</td><td id="stat-uncat">00:00</td></tr>
     </table>
   </div>
 
+
   <script>
-    let lastStats = null;
-    let elapsedTime = 0;
+    let timer;
+    let totalTime = 1500;
+    let isRunning = false;
+    let isWorkTime = true;
+    let firstStart = true;
+    let userWorkMinutes = 25;
+    let userWorkSeconds = 0;
     let selectedCategoryId = null;
 
-    function updateStatsTable() {
-      fetch('/stats')
-        .then(res => res.json())
-        .then(data => {
-          lastStats = data;
-          renderStats(data.total, data.uncategorized, data.by_category);
-        });
+    function updateDisplay() {
+      const mins = Math.floor(totalTime / 60);
+      const secs = totalTime % 60;
+      document.getElementById('timerDisplay').textContent =
+        String(mins).padStart(2, '0') + ":" + String(secs).padStart(2, '0');
     }
 
-    function renderStats(baseTotal, baseUncat, basePerCategory) {
-      const totalEl = document.getElementById('stat-total');
-      const uncatEl = document.getElementById('stat-uncat');
-      const table = document.getElementById('statsTable');
+    function startTimer() {
+      if (isRunning) return;
+      if (firstStart) {
+        const minutes = parseInt(document.getElementById('minutes').value) || 0;
+        const seconds = parseInt(document.getElementById('seconds').value) || 0;
+        totalTime = minutes * 60 + seconds;
+        userWorkMinutes = minutes;
+        userWorkSeconds = seconds;
+        firstStart = false;
+      }
+      if (totalTime <= 0) {
+        totalTime = isWorkTime ? (userWorkMinutes * 60 + userWorkSeconds) : 5 * 60;
+      }
+      document.getElementById('timeInputs').classList.add('hidden');
+      document.getElementById('statusText').textContent = isWorkTime ? "Work Time" : "Break Time";
+      updateDisplay();
+      isRunning = true;
+      timer = setInterval(() => {
+        if (totalTime > 0) {
+          totalTime--;
+          updateDisplay();
+        } else {
+          clearInterval(timer);
+          isRunning = false;
+          alert(isWorkTime ? "수고하셨습니다! 이제 휴식시간 입니다." : "휴식시간 끝!");
+          isWorkTime = !isWorkTime;
+          totalTime = isWorkTime ? (userWorkMinutes * 60 + userWorkSeconds) : 5 * 60;
+          document.getElementById('statusText').textContent = isWorkTime ? "공부시간" : "휴식시간";
+          updateDisplay();
+          startTimer();
+        }
+      }, 1000);
+    }
 
-      const extra = elapsedTime || 0;
+    function stopTimer() {
+      clearInterval(timer);
+      isRunning = false;
+    }
 
-      totalEl.textContent = Math.floor((baseTotal + extra) / 60) + "분";
-      uncatEl.textContent = Math.floor((baseUncat + (selectedCategoryId ? 0 : extra)) / 60) + "분";
+    function resetTimer() {
+      clearInterval(timer);
+      isRunning = false;
+      isWorkTime = true;
+      firstStart = true;
+      totalTime = 0;
+      document.getElementById('statusText').textContent = "Work Time";
+      document.getElementById('timerDisplay').textContent = "25:00";
+      document.getElementById('minutes').value = '25';
+      document.getElementById('seconds').value = '0';
+      document.getElementById('timeInputs').classList.remove('hidden');
+    }
 
-      while (table.rows.length > 2) {
-        table.deleteRow(2);
+    document.addEventListener("DOMContentLoaded", () => {
+      totalTime = 25 * 60;
+      updateDisplay();
+
+      document.getElementById("startBtn").addEventListener("click", startTimer);
+      document.getElementById("stopBtn").addEventListener("click", stopTimer);
+      document.getElementById("resetBtn").addEventListener("click", resetTimer);
+
+      // category click handling
+      document.querySelectorAll(".category").forEach(el => {
+        el.addEventListener("click", () => {
+          const cid = el.dataset.cid;
+          if (selectedCategoryId === cid) {
+            el.classList.remove("selected");
+            selectedCategoryId = null;
+          } else {
+            document.querySelectorAll(".category").forEach(e => e.classList.remove("selected"));
+            el.classList.add("selected");
+            selectedCategoryId = cid;
+          }
+          fetch("/select_category", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ category_id: selectedCategoryId })
+          });
+        });
+      });
+
+      // music player logic
+      const audio = document.getElementById('player');
+      const source = document.getElementById('audioSource');
+      const nowPlaying = document.getElementById('nowPlaying');
+      const progressBar = document.getElementById('progressBar');
+      const currentTime = document.getElementById('currentTime');
+      const totalTimeText = document.getElementById('totalTime');
+
+      let songList = [];
+      let currentIndex = 0;
+
+      async function loadSongs() {
+        const res = await fetch('/songs');
+        songList = await res.json();
+        if (songList.length > 0) loadSong(currentIndex);
       }
 
-      basePerCategory.forEach(item => {
-        const add = (selectedCategoryId && item.name === getSelectedCategoryName()) ? extra : 0;
+      function loadSong(index) {
+        const filename = songList[index];
+        source.src = `/play/${encodeURIComponent(filename)}`;
+        audio.load();
+        nowPlaying.textContent = "Now Playing: " + filename;
+      }
+
+      window.togglePlay = function () {
+        if (audio.paused) audio.play();
+        else audio.pause();
+      };
+
+      window.nextSong = function () {
+        if (songList.length === 0) return;
+        currentIndex = (currentIndex + 1) % songList.length;
+        loadSong(currentIndex);
+        audio.play();
+      };
+
+      window.prevSong = function () {
+        if (songList.length === 0) return;
+        currentIndex = (currentIndex - 1 + songList.length) % songList.length;
+        loadSong(currentIndex);
+        audio.play();
+      };
+
+      audio.addEventListener('timeupdate', () => {
+        const progress = (audio.currentTime / audio.duration) * 100;
+        progressBar.value = progress || 0;
+        const format = t => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
+        currentTime.textContent = format(audio.currentTime);
+        totalTimeText.textContent = format(audio.duration || 0);
+      });
+
+      progressBar.addEventListener('input', () => {
+        if (audio.duration) {
+          audio.currentTime = (progressBar.value / 100) * audio.duration;
+        }
+      });
+
+      loadSongs();
+    });
+
+
+    function formatTime(mins) {
+      const m = Math.floor(mins);
+      const s = Math.floor((mins - m) * 60);
+      return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+
+    function updateStatsTable(stats) {
+      const table = document.getElementById('statsTable');
+      const uncatEl = document.getElementById('stat-uncat');
+      uncatEl.textContent = formatTime((stats.uncategorized || 0) / 60);
+
+      while (table.rows.length > 1) table.deleteRow(1);
+      stats.by_category.forEach(item => {
         const row = table.insertRow();
-        row.innerHTML = `<td>${item.name}:</td><td>${Math.floor((item.duration + add) / 60)}분</td>`;
+        row.innerHTML = `<td>${item.name}:</td><td>${formatTime(item.duration / 60)}</td>`;
       });
     }
 
-    function getSelectedCategoryName() {
-      const selected = document.querySelector('.category.selected');
-      return selected ? selected.textContent.trim() : null;
-    }
+    document.addEventListener("DOMContentLoaded", () => {
+      fetch('/stats')
+        .then(res => res.json())
+        .then(data => updateStatsTable(data));
+    });
 
-    document.addEventListener('DOMContentLoaded', updateStatsTable);
   </script>
-
 </body>
 </html>
