@@ -2,9 +2,10 @@
 
 from flask import Blueprint, request, jsonify
 from datetime import datetime
-from flask_sqlalchemy import SQLAlchemy
+from todo_models import db
+# from flask_sqlalchemy import SQLAlchemy
 
-db = SQLAlchemy()
+# db = SQLAlchemy()
 
 class StudyLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
