@@ -1,10 +1,12 @@
 import os
 from flask import Flask, render_template
+from flask_wtf.csrf import CSRFProtect
 from todo_models import db, Category
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'development-secret-key')
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
+csrf = CSRFProtect(app)
 
 # DB 기본 세팅
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///todos.db'
