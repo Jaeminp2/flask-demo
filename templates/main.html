@@ -298,17 +298,52 @@
       document.getElementById('statusText').textContent = isWorkTime ? "Work Time" : "Break Time";
       updateDisplay();
       isRunning = true;
+
+      if (isWorkTime && selectedCategoryId && !lastSwitchTs) {
+        lastSwitchTs = Date.now();
+      }
+
       timer = setInterval(() => {
         if (totalTime > 0) {
           totalTime--;
           updateDisplay();
         } else {
           clearInterval(timer);
-          isRunning = false;
-          alert(isWorkTime ? "수고하셨습니다! 이제 휴식시간 입니다." : "휴식시간 끝!");
+
+          // 1) Flush *only* at the end of a work period
+          if (isWorkTime && selectedCategoryId && lastSwitchTs) {
+            const now       = Date.now();
+            const elapsed   = Math.floor((now - lastSwitchTs) / 1000);
+            console.log('🕑 Work ended — logging', elapsed, 's for', selectedCategoryId);
+            sendLog(selectedCategoryId, elapsed);
+          }
+
+          // 2) Reset the timestamp (but keep the category highlighted)
+          lastSwitchTs = null;
+
+          // 3) Now flip modes
+          isRunning  = false;
           isWorkTime = !isWorkTime;
-          totalTime = isWorkTime ? (userWorkMinutes * 60 + userWorkSeconds) : 5 * 60;
+          totalTime  = isWorkTime ? (userWorkMinutes*60 + userWorkSeconds) : 5*60;
+
+          alert(isWorkTime ? "공부시간 재시작!" : "수고하셨습니다! 이제 휴식시간 입니다.");
+
           document.getElementById('statusText').textContent = isWorkTime ? "공부시간" : "휴식시간";
+
+          // isRunning = false;
+          // alert(isWorkTime ? "수고하셨습니다! 이제 휴식시간 입니다." : "휴식시간 끝!");
+
+          // // **before** you flip isWorkTime, log any remaining time**
+          // if (selectedCategoryId && lastSwitchTs) {
+          //   const elapsedSec = Math.floor((Date.now() - lastSwitchTs) / 1000);
+          //   sendLog(selectedCategoryId, elapsedSec);
+          // }
+
+          // lastSwitchTs = null;
+
+          // isWorkTime = !isWorkTime;
+          // totalTime = isWorkTime ? (userWorkMinutes * 60 + userWorkSeconds) : 5 * 60;
+          // document.getElementById('statusText').textContent = isWorkTime ? "공부시간" : "휴식시간";
           updateDisplay();
           startTimer();
         }
@@ -318,6 +353,12 @@
     function stopTimer() {
       clearInterval(timer);
       isRunning = false;
+      // if a category was active, log the elapsed since lastSwitchTs
+      if (selectedCategoryId && lastSwitchTs) {
+        const elapsedSec = Math.floor((Date.now() - lastSwitchTs) / 1000);
+        sendLog(selectedCategoryId, elapsedSec);
+        lastSwitchTs = Date.now();  // reset start point if you want to resume later
+      }
     }
 
     function resetTimer() {
@@ -333,6 +374,45 @@
       document.getElementById('timeInputs').classList.remove('hidden');
     }
 
+    // turn raw seconds into MM:SS
+    function formatTime(mins) {
+      const m = Math.floor(mins);
+      const s = Math.floor((mins - m) * 60);
+      return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    }
+
+    // given the JSON { total, uncategorized, by_category: [ {name, duration}, … ] }
+    function updateStatsTable(stats) {
+      const table    = document.getElementById('statsTable');
+      const uncatEl  = document.getElementById('stat-uncat');
+
+      // update the “uncategorized” row
+      uncatEl.textContent = formatTime((stats.uncategorized || 0) / 60);
+
+      // clear out old category-rows (leave the header row alone)
+      while (table.rows.length > 1) {
+        table.deleteRow(1);
+      }
+
+      // insert one row per category
+      stats.by_category.forEach(item => {
+        const row = table.insertRow();
+        row.innerHTML = `
+          <td>${item.name}:</td>
+          <td>${formatTime(item.duration / 60)}</td>
+        `;
+      });
+    }
+
+    // fetch & update in one go
+    function refreshStats() {
+      fetch('/stats')
+        .then(r => r.json())
+        .then(updateStatsTable)
+        .catch(console.error);
+    }
+
+
     document.addEventListener("DOMContentLoaded", () => {
       totalTime = 25 * 60;
       updateDisplay();
@@ -341,25 +421,56 @@
       document.getElementById("stopBtn").addEventListener("click", stopTimer);
       document.getElementById("resetBtn").addEventListener("click", resetTimer);
 
-      // category click handling
-      document.querySelectorAll(".category").forEach(el => {
-        el.addEventListener("click", () => {
-          const cid = el.dataset.cid;
-          if (selectedCategoryId === cid) {
-            el.classList.remove("selected");
-            selectedCategoryId = null;
-          } else {
-            document.querySelectorAll(".category").forEach(e => e.classList.remove("selected"));
-            el.classList.add("selected");
-            selectedCategoryId = cid;
-          }
-          fetch("/select_category", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ category_id: selectedCategoryId })
-          });
-        });
+      let selectedCategoryId = null,
+          lastSwitchTs       = null;
+
+      // helper to POST a log chunk
+      function sendLog(categoryId, seconds) {
+        if (!categoryId || seconds <= 0) return;
+        fetch('/log', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ duration: seconds, category_id: categoryId })
+        })
+        .then(r => r.json())
+        .then(json => {
+          console.log('logged', json);
+          // update the table immediately
+          refreshStats();
+        })
+        .catch(console.error);
+      }
+
+      // call this on any category click
+      function handleCategoryClick(newCid) {
+        const now = Date.now();
+
+        // if we were already logging something, send that chunk
+        if (selectedCategoryId && lastSwitchTs && isRunning && isWorkTime) {
+          const elapsedSec = Math.floor((now - lastSwitchTs) / 1000);
+          sendLog(selectedCategoryId, elapsedSec);
+        }
+
+        // toggle selection
+        if (selectedCategoryId === newCid) {
+          selectedCategoryId = null;
+          lastSwitchTs       = null;
+        } else {
+          selectedCategoryId = newCid;
+          lastSwitchTs       = now;
+        }
+
+        // update UI highlight
+        document.querySelectorAll('.category').forEach(el =>
+          el.classList.toggle('selected', el.dataset.cid === selectedCategoryId)
+        );
+      }
+
+      // wire up your category buttons
+      document.querySelectorAll('.category').forEach(el => {
+        el.addEventListener('click', () => handleCategoryClick(el.dataset.cid));
       });
+
 
       // music player logic
       const audio = document.getElementById('player');
@@ -419,6 +530,8 @@
       });
 
       loadSongs();
+      // initial load of statistics
+      refreshStats();
     });
 
 

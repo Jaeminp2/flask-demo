@@ -18,6 +18,7 @@ study_bp = Blueprint('study', __name__)
 @study_bp.route('/log', methods=['POST'])
 def log_study():
     data = request.get_json()
+    print('PAYLOAD:', data)
     duration = data.get('duration')
     category_id = data.get('category_id')
 
