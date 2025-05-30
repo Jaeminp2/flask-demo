@@ -200,20 +200,46 @@
       </h2>
       <ul>
         {% for t in c.todos %}
-          <li>
-            <form method="post" action="{{ url_for('todo.toggle', todo_id=t.id) }}" style="display:inline;">
+          <li class="task-item" data-tid="{{ t.id }}">
+            <!-- <form method="post" action="{{ url_for('todo.toggle', todo_id=t.id) }}" style="display:inline;">
               <input type="checkbox" onChange="this.form.submit()" {% if t.completed %}checked{% endif %}>
+            </form> -->
+            <form 
+              class="ajax-toggle-task"
+              method="post"
+              action="{{ url_for('todo.toggle', todo_id=t.id) }}"
+              style="display:inline;">
+              <input type="checkbox"
+                name="completed"
+                {% if t.completed %}checked{% endif %}>
             </form>
             <span {% if t.completed %}style="text-decoration:line-through"{% endif %}>{{ t.text }}</span>
-            <form method="post" action="{{ url_for('todo.delete_task', todo_id=t.id) }}" style="display:inline; margin-left:8px;">
+            <!-- <form method="post" action="{{ url_for('todo.delete_task', todo_id=t.id) }}" style="display:inline; margin-left:8px;">
+              <button type="submit" title="Delete task">🗑</button>
+            </form> -->
+            <form
+              class="ajax-delete-task"
+              method="post"
+              action="{{ url_for('todo.delete_task', todo_id=t.id) }}"
+              style="display:inline; margin-left:8px;">
               <button type="submit" title="Delete task">🗑</button>
             </form>
           </li>
         {% endfor %}
         <li>
-          <form method="post" action="{{ url_for('todo.todos') }}">
+          <!-- <form method="post" action="{{ url_for('todo.todos') }}">
             <input type="hidden" name="category_id" value="{{ c.id }}">
             <input type="text" name="todo" placeholder="New task in {{ c.name }}" required>
+            <button type="submit">Add</button>
+          </form> -->
+          <form
+            class="ajax-add-task"
+            method="post"
+            action="{{ url_for('todo.todos') }}">
+            <input type="hidden" name="category_id" value="{{ c.id }}">
+            <input type="text" name="todo"
+              placeholder="New task in {{ c.name }}"
+              required>
             <button type="submit">Add</button>
           </form>
         </li>
@@ -222,7 +248,15 @@
 
     <hr>
     <h3>Add new category</h3>
-    <form method="post" action="{{ url_for('todo.add_category') }}">
+    <!-- <form method="post" action="{{ url_for('todo.add_category') }}">
+      <input type="text" name="category_name" placeholder="Category name" required>
+      <button type="submit">Add Category</button>
+    </form> -->
+    <form 
+      class="ajax-add-category" 
+      method="post" 
+      action="{{ url_for('todo.add_category') }}"
+    >
       <input type="text" name="category_name" placeholder="Category name" required>
       <button type="submit">Add Category</button>
     </form>
@@ -454,10 +488,155 @@
       // initial load
       refreshStats();
 
-      // wire up your category buttons
-      document.querySelectorAll('.category').forEach(el => {
-        el.addEventListener('click', () => handleCategoryClick(el.dataset.cid));
+
+      // Add Category via AJAX
+      document.querySelector('.ajax-add-category')
+        .addEventListener('submit', async e => {
+          e.preventDefault();
+          const form = e.target;
+          const data = new FormData(form);
+          const res  = await fetch(form.action, { method: 'POST', body: data });
+          const json = await res.json();
+
+          // 1. Create the <h2> wrapper
+          const h2 = document.createElement('h2');
+          h2.classList.add('category');
+          h2.dataset.cid = json.id;
+          // 2. Fill in its innerHTML (name + delete-form)
+          h2.innerHTML = `
+            ${json.name}
+            <form
+              class="ajax-delete-category"
+              method="post"
+              action="/delete_category/${json.id}"
+              style="display:inline;"
+            >
+              <button type="submit" title="Delete ${json.name}">✕</button>
+            </form>
+          `;
+          // 3. Insert it before the <hr> in .todo-section
+          const todoSection = document.querySelector('.todo-section');
+          const hr = todoSection.querySelector('hr');
+          todoSection.insertBefore(h2, hr);
+
+          // 4. Wire up its click-to-select
+          h2.addEventListener('click', () => handleCategoryClick(json.id));
+
+          // 5. Wire up its delete-via-AJAX
+          h2.querySelector('.ajax-delete-category')
+            .addEventListener('submit', async ev => {
+              ev.preventDefault();
+              await fetch(ev.target.action, { method: 'POST' });
+              h2.remove();
+            });
+
+          form.reset();
+        });
+
+      // Delete Category via AJAX
+      document.querySelectorAll('.ajax-delete-category').forEach(form => {
+        form.addEventListener('submit', async e => {
+          e.preventDefault();
+          await fetch(form.action, { method: 'POST' });
+          // remove the <h2 class="category" data-cid="…"> container
+          form.closest('h2.category').remove();
+        });
       });
+
+      // Toggle task complete
+      document.querySelectorAll('.ajax-toggle-task').forEach(form => {
+        form.addEventListener('submit', async e => {
+          e.preventDefault();
+          const res  = await fetch(form.action, { method: 'POST' });
+          if (!res.ok) return console.error('Toggle failed');
+          // Flip the line‐through in the DOM
+          const li = form.closest('li.task-item');
+          if (!li) return console.error("Couldn't find the <li> for this task");
+          const chk = form.querySelector('input[type=checkbox]');
+          const span = li.querySelector('span');
+          if (chk.checked) span.style.textDecoration = 'line-through';
+          else           span.style.textDecoration = '';
+        });
+
+        // also catch the checkbox change rather than form submit
+        form.querySelector('input[type=checkbox]')
+            .addEventListener('change', () => form.requestSubmit());
+      });
+
+      // Delete task
+      document.querySelectorAll('.ajax-delete-task').forEach(form => {
+        form.addEventListener('submit', async e => {
+          e.preventDefault();
+          const res = await fetch(form.action, { method: 'POST' });
+          if (!res.ok) return console.error('Delete failed');
+          const li = form.closest('li.task-item');
+          if (li) li.remove();
+        });
+      });
+
+      // Add new task
+      document.querySelectorAll('.ajax-add-task').forEach(form => {
+        form.addEventListener('submit', async e => {
+          e.preventDefault();
+          const data = new FormData(form);
+          const res  = await fetch(form.action, { method: 'POST', body: data });
+          if (!res.ok) {
+            console.error('Add task failed');
+            return;
+          }
+          const json = await res.json(); 
+          // expect { id, text, completed, toggle_url, delete_url, category_id }
+
+          // 1. Find the <ul> for this category:
+          const catId = data.get('category_id');
+          const header = document.querySelector(`h2.category[data-cid="${catId}"]`);
+          const ul     = header.nextElementSibling;   // the <ul> right after the <h2>
+
+          // 2. Create the new <li>
+          const li = document.createElement('li');
+          li.classList.add('task-item');
+          li.dataset.tid = json.id;
+          li.innerHTML = `
+            <form class="ajax-toggle-task" method="post" action="${json.toggle_url}" style="display:inline;">
+              <input type="checkbox" ${json.completed ? 'checked':''}>
+            </form>
+            <span ${json.completed ? 'style="text-decoration:line-through"':''}>${json.text}</span>
+            <form class="ajax-delete-task" method="post" action="${json.delete_url}" style="display:inline; margin-left:8px;">
+              <button type="submit" title="Delete task">🗑</button>
+            </form>
+          `;
+
+          // 3. Insert it *before* the “add” row (the last <li> in this UL)
+          const addLi = ul.querySelector('li:last-child');
+          ul.insertBefore(li, addLi);
+
+          // 4. Wire up its toggle-via-AJAX
+          const toggleForm = li.querySelector('.ajax-toggle-task');
+          toggleForm.addEventListener('submit', async ev => {
+            ev.preventDefault();
+            await fetch(ev.target.action, { method: 'POST' });
+            const chk = toggleForm.querySelector('input[type=checkbox]');
+            const span = li.querySelector('span');
+            span.style.textDecoration = chk.checked ? 'line-through' : '';
+          });
+          toggleForm.querySelector('input').addEventListener('change', () => toggleForm.requestSubmit());
+
+          // 5. Wire up its delete-via-AJAX
+          const delForm = li.querySelector('.ajax-delete-task');
+          delForm.addEventListener('submit', async ev => {
+            ev.preventDefault();
+            await fetch(ev.target.action, { method: 'POST' });
+            li.remove();
+          });
+
+          form.reset();
+        });
+      });
+
+      // // wire up your category buttons
+      // document.querySelectorAll('.category').forEach(el => {
+      //   el.addEventListener('click', () => handleCategoryClick(el.dataset.cid));
+      // });
       
       // music player logic
       const audio = document.getElementById('player');
