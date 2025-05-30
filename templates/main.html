@@ -186,7 +186,15 @@
     <h1>Todo List</h1>
     {% for c in categories %}
       <h2 class="category" data-cid="{{ c.id }}">{{ c.name }}
-        <form method="post" action="{{ url_for('todo.delete_category', cat_id=c.id) }}" style="display:inline;">
+        <!-- <form method="post" action="{{ url_for('todo.delete_category', cat_id=c.id) }}" style="display:inline;">
+          <button type="submit" title="Delete {{ c.name }}">✕</button>
+        </form> -->
+        <form
+          class="ajax-delete-category"
+          method="post"
+          action="{{ url_for('todo.delete_category', cat_id=c.id) }}"
+          style="display: inline;"
+        >
           <button type="submit" title="Delete {{ c.name }}">✕</button>
         </form>
       </h2>
@@ -258,9 +266,7 @@
 
   <div id="statsBox">
     <h3>공부 시간</h3>
-    <table id="statsTable">
-      <tr><td>일반:</td><td id="stat-uncat">00:00</td></tr>
-    </table>
+    <table id="statsTable"></table>
   </div>
 
 
@@ -273,6 +279,7 @@
     let userWorkMinutes = 25;
     let userWorkSeconds = 0;
     let selectedCategoryId = null;
+    let lastSwitchTs = null;
 
     function updateDisplay() {
       const mins = Math.floor(totalTime / 60);
@@ -299,7 +306,7 @@
       updateDisplay();
       isRunning = true;
 
-      if (isWorkTime && selectedCategoryId && !lastSwitchTs) {
+      if (isWorkTime && lastSwitchTs === null) {
         lastSwitchTs = Date.now();
       }
 
@@ -309,10 +316,10 @@
           updateDisplay();
         } else {
           clearInterval(timer);
+          const now = Date.now();
 
           // 1) Flush *only* at the end of a work period
-          if (isWorkTime && selectedCategoryId && lastSwitchTs) {
-            const now       = Date.now();
+          if (isWorkTime && lastSwitchTs !== null) {
             const elapsed   = Math.floor((now - lastSwitchTs) / 1000);
             console.log('🕑 Work ended — logging', elapsed, 's for', selectedCategoryId);
             sendLog(selectedCategoryId, elapsed);
@@ -330,20 +337,6 @@
 
           document.getElementById('statusText').textContent = isWorkTime ? "공부시간" : "휴식시간";
 
-          // isRunning = false;
-          // alert(isWorkTime ? "수고하셨습니다! 이제 휴식시간 입니다." : "휴식시간 끝!");
-
-          // // **before** you flip isWorkTime, log any remaining time**
-          // if (selectedCategoryId && lastSwitchTs) {
-          //   const elapsedSec = Math.floor((Date.now() - lastSwitchTs) / 1000);
-          //   sendLog(selectedCategoryId, elapsedSec);
-          // }
-
-          // lastSwitchTs = null;
-
-          // isWorkTime = !isWorkTime;
-          // totalTime = isWorkTime ? (userWorkMinutes * 60 + userWorkSeconds) : 5 * 60;
-          // document.getElementById('statusText').textContent = isWorkTime ? "공부시간" : "휴식시간";
           updateDisplay();
           startTimer();
         }
@@ -352,13 +345,13 @@
 
     function stopTimer() {
       clearInterval(timer);
-      isRunning = false;
       // if a category was active, log the elapsed since lastSwitchTs
-      if (selectedCategoryId && lastSwitchTs) {
+      if (isWorkTime && lastSwitchTs !== null) {
         const elapsedSec = Math.floor((Date.now() - lastSwitchTs) / 1000);
         sendLog(selectedCategoryId, elapsedSec);
         lastSwitchTs = Date.now();  // reset start point if you want to resume later
       }
+      isRunning = false;
     }
 
     function resetTimer() {
@@ -374,37 +367,33 @@
       document.getElementById('timeInputs').classList.remove('hidden');
     }
 
-    // turn raw seconds into MM:SS
     function formatTime(mins) {
       const m = Math.floor(mins);
       const s = Math.floor((mins - m) * 60);
-      return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+      return String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
     }
 
-    // given the JSON { total, uncategorized, by_category: [ {name, duration}, … ] }
+    // helper: rebuild the stats table from scratch
     function updateStatsTable(stats) {
-      const table    = document.getElementById('statsTable');
-      const uncatEl  = document.getElementById('stat-uncat');
-
-      // update the “uncategorized” row
-      uncatEl.textContent = formatTime((stats.uncategorized || 0) / 60);
-
-      // clear out old category-rows (leave the header row alone)
-      while (table.rows.length > 1) {
-        table.deleteRow(1);
-      }
-
-      // insert one row per category
-      stats.by_category.forEach(item => {
+      const table = document.getElementById('statsTable');
+      table.innerHTML = '';
+      // uncategorized
+      const uncRow = table.insertRow();
+      uncRow.innerHTML = `
+        <td>일반:</td>
+        <td>${formatTime((stats.uncategorized||0)/60)}</td>
+      `;
+      // per-category
+      (stats.by_category||[]).forEach(item => {
         const row = table.insertRow();
         row.innerHTML = `
           <td>${item.name}:</td>
-          <td>${formatTime(item.duration / 60)}</td>
+          <td>${formatTime(item.duration/60)}</td>
         `;
       });
     }
 
-    // fetch & update in one go
+    // helper: fetch + paint
     function refreshStats() {
       fetch('/stats')
         .then(r => r.json())
@@ -412,66 +401,64 @@
         .catch(console.error);
     }
 
+    // helper to POST a log chunk
+    function sendLog(categoryId, seconds) {
+      if (seconds <= 0) return;
+      fetch('/log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ duration: seconds, category_id: categoryId })
+      })
+      .then(r => r.json())
+      .then(json => {
+        console.log('logged', json);
+        // update the table immediately
+        refreshStats();
+      })
+      .catch(console.error);
+    }
+
+    // call this on any category click
+    function handleCategoryClick(newCid) {
+      const now = Date.now();
+
+      // if we were already logging something, send that chunk
+      if (isRunning && isWorkTime && lastSwitchTs !== null) {
+        const elapsedSec = Math.floor((now - lastSwitchTs) / 1000);
+        sendLog(selectedCategoryId, elapsedSec);
+      }
+
+      // toggle selection
+      // selectedCategoryId = (selectedCategoryId === newCid) ? null : newCid;
+      if (selectedCategoryId === newCid) {
+        selectedCategoryId = null;
+        lastSwitchTs       = null;
+      } else {
+        selectedCategoryId = newCid;
+        lastSwitchTs       = now;
+      }
+
+      // update UI highlight
+      document.querySelectorAll('.category').forEach(el =>
+        el.classList.toggle('selected', el.dataset.cid === selectedCategoryId)
+      );
+    }
 
     document.addEventListener("DOMContentLoaded", () => {
-      totalTime = 25 * 60;
       updateDisplay();
 
       document.getElementById("startBtn").addEventListener("click", startTimer);
       document.getElementById("stopBtn").addEventListener("click", stopTimer);
       document.getElementById("resetBtn").addEventListener("click", resetTimer);
 
-      let selectedCategoryId = null,
-          lastSwitchTs       = null;
-
-      // helper to POST a log chunk
-      function sendLog(categoryId, seconds) {
-        if (!categoryId || seconds <= 0) return;
-        fetch('/log', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ duration: seconds, category_id: categoryId })
-        })
-        .then(r => r.json())
-        .then(json => {
-          console.log('logged', json);
-          // update the table immediately
-          refreshStats();
-        })
-        .catch(console.error);
-      }
-
-      // call this on any category click
-      function handleCategoryClick(newCid) {
-        const now = Date.now();
-
-        // if we were already logging something, send that chunk
-        if (selectedCategoryId && lastSwitchTs && isRunning && isWorkTime) {
-          const elapsedSec = Math.floor((now - lastSwitchTs) / 1000);
-          sendLog(selectedCategoryId, elapsedSec);
-        }
-
-        // toggle selection
-        if (selectedCategoryId === newCid) {
-          selectedCategoryId = null;
-          lastSwitchTs       = null;
-        } else {
-          selectedCategoryId = newCid;
-          lastSwitchTs       = now;
-        }
-
-        // update UI highlight
-        document.querySelectorAll('.category').forEach(el =>
-          el.classList.toggle('selected', el.dataset.cid === selectedCategoryId)
-        );
-      }
+      // initial load
+      refreshStats();
 
       // wire up your category buttons
       document.querySelectorAll('.category').forEach(el => {
         el.addEventListener('click', () => handleCategoryClick(el.dataset.cid));
       });
-
-
+      
       // music player logic
       const audio = document.getElementById('player');
       const source = document.getElementById('audioSource');
@@ -533,32 +520,6 @@
       // initial load of statistics
       refreshStats();
     });
-
-
-    function formatTime(mins) {
-      const m = Math.floor(mins);
-      const s = Math.floor((mins - m) * 60);
-      return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-    }
-
-    function updateStatsTable(stats) {
-      const table = document.getElementById('statsTable');
-      const uncatEl = document.getElementById('stat-uncat');
-      uncatEl.textContent = formatTime((stats.uncategorized || 0) / 60);
-
-      while (table.rows.length > 1) table.deleteRow(1);
-      stats.by_category.forEach(item => {
-        const row = table.insertRow();
-        row.innerHTML = `<td>${item.name}:</td><td>${formatTime(item.duration / 60)}</td>`;
-      });
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      fetch('/stats')
-        .then(res => res.json())
-        .then(data => updateStatsTable(data));
-    });
-
   </script>
 </body>
 </html>
