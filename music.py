@@ -1,21 +1,13 @@
 # music.py
+
+from flask import Blueprint, send_file
 import os
-from flask import Blueprint, send_file, jsonify
 
-music_bp = Blueprint('music', __name__)
-MUSIC_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'music')
+music_bp = Blueprint("music", __name__)
 
-def get_music_list():
-    return sorted([f for f in os.listdir(MUSIC_FOLDER) if f.lower().endswith('.mp3')])
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# MUSIC_PATH = os.path.join(BASE_DIR, 'music', '여행 릴러말즈.mp3')
 
-@music_bp.route('/songs')
-def list_songs():
-    return jsonify(get_music_list())
-
-@music_bp.route('/play/<filename>')
-def play_music(filename):
-    file_path = os.path.join(MUSIC_FOLDER, filename)
-    if os.path.exists(file_path):
-        return send_file(file_path, mimetype='audio/mpeg')
-    else:
-        return 'File not found', 404
+@music_bp.route("/music")
+def music():
+    return send_file("/Users/jaeminpark/Desktop/flask-demo/music/겨울카페 분위기.mp3", mimetype='audio/mpeg', as_attachment=False)

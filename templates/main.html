@@ -153,7 +153,7 @@
       color: #000;
     }
 
-      #statsBox {
+    #statsBox {
     position: absolute;
     top: 20px;
     right: 20px;
@@ -162,6 +162,10 @@
     border-radius: 8px;
     color: white;
     min-width: 180px;
+
+    max-height: 0;
+    opacity: 0;
+    transition: max-height 0.4s ease, padding 0.4s ease, opacity 0.4s ease;
   }
   #statsBox h3 {
     margin-top: 0;
@@ -176,6 +180,20 @@
   }
   #statsBox td {
     padding: 2px 4px;
+  }
+    .top-right-btn {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 1000;
+    padding: 8px 12px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s;
   }
   </style>
 </head>
@@ -249,7 +267,7 @@
   </div>
 
   <div class="timer-section">
-    <h2>시간을 세팅하세요</h2>
+    <h2>공부 타이머</h2>
     <div class="time-inputs" id="timeInputs">
       <input type="number" id="minutes" placeholder="분" min="0" value="25"> :
       <input type="number" id="seconds" placeholder="초" min="0" max="59" value="0">
@@ -265,26 +283,20 @@
     <div class="status" id="statusText">Work Time</div>
   </div>
 
-  <div class="music-section">
-    <div class="player">
-      <div class="title" id="nowPlaying">Now Playing:</div>
-      <input type="range" id="progressBar" value="0">
-      <div class="time">
-        <span id="currentTime">0:00</span>
-        <span id="totalTime">0:00</span>
-      </div>
-      <audio id="player">
-        <source id="audioSource" src="" type="audio/mpeg">
-      </audio>
-      <div class="controls">
-        <button onclick="prevSong()">⏮</button>
-        <button onclick="togglePlay()">⏯</button>
-        <button onclick="nextSong()">⏭</button>
-      </div>
-    </div>
-  </div>
+  <audio id="bgMusic" loop muted autoplay>
+    <source src="/music" type="audio/mpeg">
+  </audio>
 
-  <div id="statsBox">
+  <!-- 토글 버튼 -->
+  <button id="noteButton" style="position: fixed; bottom: 20px; right: 20px; font-size: 32px; background: none; border: none; cursor: pointer;">
+    🔈
+  </button>
+
+  <!-- 통계보기 토글 버튼 추가 -->
+  <button id="toggleStatsBtn" class="top-right-btn">통계 보기</button>
+
+  <!--통계 영역 (처음엔 닫힌 상태) -->
+  <div id="statsBox" style="max-height: 0; overflow: hidden; transition: max-height 0.5s ease-out;">
     <h3>공부 시간</h3>
     <table id="statsTable"></table>
   </div>
@@ -312,6 +324,7 @@
     let selectedCategoryId = null;
     let lastSwitchTs = null;
 
+    //--------------타이머 파트 ---------------//
     function updateDisplay() {
       const mins = Math.floor(totalTime / 60);
       const secs = totalTime % 60;
@@ -404,6 +417,9 @@
       return String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
     }
 
+    //--------------타이머 파트 종료 ---------------//
+
+    //--------------공부시간 스탯 파트 ---------------//
     // helper: rebuild the stats table from scratch
     function updateStatsTable(stats) {
       const table = document.getElementById('statsTable');
@@ -505,6 +521,28 @@
 
       // initial load
       refreshStats();
+
+        // ✅ 통계 펼치기/접기 버튼 이벤트 추가
+      const toggleBtn = document.getElementById("toggleStatsBtn");
+      const statsBox = document.getElementById("statsBox");
+
+      let statsVisible = false;
+
+      toggleBtn.addEventListener("click", () => {
+        statsVisible = !statsVisible;
+
+        if (statsVisible) {
+          statsBox.style.maxHeight = "500px";
+          statsBox.style.padding = "15px";        // 보이게
+          statsBox.style.opacity = "1";
+          toggleBtn.textContent = "통계 닫기";
+        } else {
+          statsBox.style.maxHeight = "0";
+          statsBox.style.padding = "0";           // 숨기기
+          statsBox.style.opacity = "0";
+          toggleBtn.textContent = "통계 보기";
+        }
+      });
 
 
       // Event delegation for todo section
@@ -647,64 +685,34 @@
         }
       });
       
-      // music player logic
-      const audio = document.getElementById('player');
-      const source = document.getElementById('audioSource');
-      const nowPlaying = document.getElementById('nowPlaying');
-      const progressBar = document.getElementById('progressBar');
-      const currentTime = document.getElementById('currentTime');
-      const totalTimeText = document.getElementById('totalTime');
+      const audio = document.getElementById("bgMusic");
+      const button = document.getElementById("noteButton");
+      let isPlaying = true;
 
-      let songList = [];
-      let currentIndex = 0;
-
-      async function loadSongs() {
-        const res = await fetch('/songs');
-        songList = await res.json();
-        if (songList.length > 0) loadSong(currentIndex);
-      }
-
-      function loadSong(index) {
-        const filename = songList[index];
-        source.src = `/play/${encodeURIComponent(filename)}`;
-        audio.load();
-        nowPlaying.textContent = "Now Playing: " + filename;
-      }
-
-      window.togglePlay = function () {
-        if (audio.paused) audio.play();
-        else audio.pause();
-      };
-
-      window.nextSong = function () {
-        if (songList.length === 0) return;
-        currentIndex = (currentIndex + 1) % songList.length;
-        loadSong(currentIndex);
-        audio.play();
-      };
-
-      window.prevSong = function () {
-        if (songList.length === 0) return;
-        currentIndex = (currentIndex - 1 + songList.length) % songList.length;
-        loadSong(currentIndex);
-        audio.play();
-      };
-
-      audio.addEventListener('timeupdate', () => {
-        const progress = (audio.currentTime / audio.duration) * 100;
-        progressBar.value = progress || 0;
-        const format = t => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
-        currentTime.textContent = format(audio.currentTime);
-        totalTimeText.textContent = format(audio.duration || 0);
+      window.addEventListener("load", () => {
+        const audio = document.getElementById("bgMusic");
+        setTimeout(() => {
+          audio.muted = false;
+          audio.currentTime = 0;
+          audio.play().catch(err => {
+            console.warn("브라우저가 자동재생을 막았습니다. 클릭이 필요할 수 있습니다.");
+          });
+        }, 500);
       });
 
-      progressBar.addEventListener('input', () => {
-        if (audio.duration) {
-          audio.currentTime = (progressBar.value / 100) * audio.duration;
+      button.addEventListener("click", () => {
+        if (isPlaying) {
+          audio.pause();
+          button.textContent = "🔇";
+        } else {
+          audio.currentTime = 0;
+          audio.play();
+          button.textContent = "🔈";
         }
+        isPlaying = !isPlaying;
       });
 
-      loadSongs();
+
       // initial load of statistics
       refreshStats();
     });

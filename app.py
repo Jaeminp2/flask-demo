@@ -6,7 +6,7 @@ from todo_models import db, Category
 SECRET_KEY = os.environ.get('SECRET_KEY', 'development-secret-key')
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
-csrf = CSRFProtect(app)
+csrf = CSRFProtect(app)  #토큰 생성 부분 (보안을 위한 용도)
 
 # DB 기본 세팅
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///todos.db'
