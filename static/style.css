@@ -16,18 +16,86 @@ input {
 }
 
 button {
-    padding: 10px 20px;
-    font-size: 16px;
-    margin: 10px;
-    cursor: pointer;
-    border: none;
-    background-color: #007BFF;
-    color: white;
-    border-radius: 5px;
+  font-family: 'Jersey 25', sans-serif;
+  font-size: 16px;
+  font-weight: 400;
 }
 
 button:hover {
     background-color: #0056b3;
 }
 
+.todo-section h1 {
+  font-family: 'Jersey 25', sans-serif;
+  font-size: 32px;
+  font-weight: 400;
+  color: #3F3F3F;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
 
+.todo-section h2 {
+  font-family: 'Jersey 25', sans-serif;
+  font-size: 24px;               /* 기존보다 줄임 */
+  font-weight: 400;
+  color: #3F3F3F;
+  text-transform: uppercase;
+  margin-top: 0px;
+  margin-bottom: 0px;              /* 위아래 여백 줄이기 */
+  line-height: 1.2;              /* 줄 간격 조절 */
+}
+
+.todo-section h3 {
+  font-family: 'Jersey 25', sans-serif;
+  font-size: 20px;
+  font-weight: 400;
+  color: #3F3F3F;
+  text-transform: uppercase;
+  margin: 12px 0;
+}
+
+.todo-section {
+  text-align: left;
+}
+
+.divider {
+  border: none;
+  border-top: 2px solid #F0E0CD; /* Figma에서 본 색상 */
+  margin: 16px 0;
+}
+
+.task-item span {
+  font-family: 'Jersey 25', sans-serif;
+  font-size: 18px;
+  color: #3F3F3F;
+}
+
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;              /* 요소 사이 간격 */
+  margin-top: 0px;         /* 위아래 여백 줄이기 */
+  padding-left: 0px;     /* 왼쪽 여백 제거 */
+}
+
+.todo-section ul {
+  margin-top: 0px;
+  margin-bottom: 0px;
+  padding-left: 0;
+}
+
+input[type="text"] {
+  border-radius: 10px;
+  padding: 6px 12px;
+  font-family: 'Jersey 25', sans-serif;
+  font-size: 14px;
+  width: 60px;
+  height: 20px;
+}   
+
+ul li form.ajax-add-task {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 48px;  /* 기존 task 텍스트 정렬 맞추기 */
+}

@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="csrf-token" content="{{ csrf_token() }}">
+  <link href="https://fonts.googleapis.com/css2?family=Jersey+25&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
   <title>Latte Learn</title>
   <style>
     body {
@@ -17,7 +20,13 @@
       position: absolute;
       top: 20px;
       left: 20px;
-      width: 35%;
+      width: 434px;              /* Figma width */
+      height: 379px;             /* Figma height */
+      background-color: #FFF4E6; /* ✅ To-Do 상자 배경만 적용 */
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      overflow-y: auto;
     }
 
     .timer-section {
@@ -195,11 +204,17 @@
     cursor: pointer;
     transition: background-color 0.2s;
   }
+  .task-item {
+    font-family: 'Jersey 25', sans-serif;
+    font-size: 20px;
+    color: #3F3F3F;
+  }
   </style>
 </head>
 <body>
 
   <h1 style="text-align: center; padding: 20px;">Latte Learn</h1>
+
 
   <div class="todo-section">
     <h1>Todo List</h1>
@@ -246,7 +261,7 @@
             action="{{ url_for('todo.todos') }}">
             <input type="hidden" name="category_id" value="{{ c.id }}">
             <input type="text" name="todo"
-              placeholder="New task in {{ c.name }}"
+              placeholder="Task"
               required>
             <button type="submit">Add</button>
           </form>
@@ -261,7 +276,7 @@
       method="post" 
       action="{{ url_for('todo.add_category') }}"
     >
-      <input type="text" name="category_name" placeholder="Category name" required>
+      <input type="text" name="category_name" placeholder="Category" required>
       <button type="submit">Add Category</button>
     </form>
   </div>
@@ -575,7 +590,7 @@
               <li>
                 <form class="ajax-add-task" method="post" action="{{ url_for('todo.todos') }}">
                   <input type="hidden" name="category_id" value="${json.id}">
-                  <input type="text" name="todo" placeholder="New task in ${json.name}" required>
+                  <input type="text" name="todo" placeholder="Task" required>
                   <button type="submit">Add</button>
                 </form>
               </li>
@@ -588,7 +603,7 @@
             todoSection.insertBefore(ul, hr);
             
             // Add click handler
-            h2.addEventListener('click', () => handleCategoryClick(json.id));
+            h2.addEventListener('click', () => handleCategoryClick(Number(category.dataset.cid)));
             form.reset();
           }
         }
