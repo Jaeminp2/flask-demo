@@ -56,6 +56,7 @@ button:hover {
 
 .todo-section {
   text-align: left;
+  margin-top: 60px;
 }
 
 .divider {
@@ -98,4 +99,249 @@ ul li form.ajax-add-task {
   align-items: center;
   gap: 8px;
   margin-left: 48px;  /* 기존 task 텍스트 정렬 맞추기 */
+}
+
+.right-background {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 50vw;   /* 전체 너비의 50% */
+  height: 100vh; /* 전체 높이 */
+  background-image: url('/static/images/background.png');  /* 이미지 경로 */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  z-index: -1; /* 메인 콘텐츠보다 뒤에 있게 */
+}
+.left-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 50vw;
+  height: 100vh;
+  background-image: url('/static/images/left-background.png');  /* Flask 기준 경로 */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  z-index: -1;
+}
+
+.main-content {
+  width: 50vw;
+  padding: 40px;
+  position: relative;
+  z-index: 1;
+}
+
+.logo-image {
+  position: absolute;
+  top: 5px;         /* 위에서부터 거리 조정 */
+  left: 120px;        /* 왼쪽에서부터 거리 조정 */
+  width: 272px;      /* 적절히 축소 (원본은 362px) */
+  height: auto;      /* 비율 유지 */
+  z-index: 2;        /* 다른 요소보다 위에 */
+}
+
+.center-image {
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 0; /* 배경보다 위, 콘텐츠보다 아래 */
+}
+.center-image img {
+  width: 330px; /* 적절한 크기로 조정 */
+  height: auto;
+}
+
+.left-deco {
+  position: absolute;
+  top: 52.5%;             /* 중앙 기준 위에서 조절 (center-image와 같게) */
+  left: 41%;            /* 화면 왼쪽 20% 위치 */
+  transform: translate(-50%, -50%);
+  z-index: 0;
+}
+
+.left-deco img {
+  width: 143px;          /* 원하는 크기로 조절 가능 */
+  height: auto;
+}
+
+.right-deco {
+  position: absolute;
+  top: 52%;              /* espresso 머신 기준 */
+  right: 38%;            /* 오른쪽 여백 조정 */
+  transform: translate(50%, -50%);
+  z-index: 0;
+}
+
+.right-deco img {
+  width: 175px;
+  height: auto;
+}
+
+.right-deco-2 {
+  position: absolute;
+  top: 51.5%;              /* espresso 머신 기준 */
+  right: 28%;            /* 오른쪽 여백 조정 */
+  transform: translate(50%, -50%);
+  z-index: 0;
+}
+
+.right-deco-2 img {
+  width: 190px;
+  height: auto;
+}
+
+.pomodoro-label {
+  margin-top: 520px;
+  transform: translateY(30px);
+  color: #FFF;
+  font-family: "Jersey 25", sans-serif;
+  font-size: 35px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+}
+
+.pomodoro-time {
+  color: #FFF;
+  font-family: "Jersey 25", sans-serif;
+  font-size: 48px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+
+  /* .time-display 속성 통합 */
+  margin-top: 10px;
+  border: 3px solid #ffffff;
+  display: inline-block;
+  padding: 15px 30px;
+  border-radius: 10px;
+  background-color: #3e3e3e;
+}
+
+#statusText {
+  font-family: 'Jersey 25', sans-serif;
+  font-size: 24px;
+  color: white;
+  margin-top: -16px;
+}
+
+.timer-section input[type="number"] {
+  font-family: 'Jersey 25', sans-serif;
+  font-size: 16px;
+  width: 36px;
+  height: 24px;
+  padding: 6px 10px;
+  text-align: center;
+  border: 2px solid #333;
+  border-radius: 10px;
+  background-color: #fff;
+  box-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+  transition: background-color 0.2s ease;
+}
+
+.timer-section input[type="number"]:hover {
+  background-color: #f5f5f5;
+}
+
+.icon-button {
+  display: flex;
+  width: 36px;
+  height: 36px;
+  padding: 6px; /* 기존 12px → 6px 줄이기 */
+  justify-content: center;
+  align-items: center;
+  gap: 0; /* 내부 간격 없음 */
+  flex-shrink: 0;
+  border-radius: 48px;
+  background: #FFB353;
+  border: none;
+  cursor: pointer;
+  margin: 0; /* 중앙정렬은 부모에서 함 */
+}
+
+
+.icon-button svg {
+  width: 18px;
+  height: 18px;
+  fill: white; /* SVG 내부 색상 지정 */
+}
+.button-group {
+  display: flex;
+  justify-content: center;
+  gap: 4px; /* 기존 12px → 4px 줄이기 */
+  margin-top: 16px;
+}
+
+.top-right-btn {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  z-index: 1000;
+
+  display: inline-flex;
+  padding: 9.6px 14.4px;
+  align-items: center;
+  gap: 10.8px;
+
+  border-radius: 9.6px;
+  border: 1.2px solid #E2CFB3;
+  background: #FFF9F0;
+  box-shadow: 0px 1.2px 4.8px 0px rgba(88, 65, 56, 0.25);
+
+  font-family: 'Jersey 25', sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  color: #584138;
+
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.top-right-btn:hover {
+  background-color: #f1e7d7;
+}
+
+#statsBox {
+  position: absolute;
+  top: 60px;
+  right: 20px;
+  z-index: 999;
+
+  background: #FFF9F0; /* 버튼 배경색과 일치 */
+  border: 1.2px solid #E2CFB3;
+  box-shadow: 0px 1.2px 4.8px 0px rgba(88, 65, 56, 0.25);
+  border-radius: 9.6px;
+  padding: 16px;
+
+  color: #584138;
+  font-family: 'Jersey 25', sans-serif;
+  font-size: 14px;
+
+  min-width: 180px;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease, padding 0.4s ease, opacity 0.4s ease;
+}
+
+#statsBox h3 {
+  margin-top: 0;
+  font-size: 18px;
+  border-bottom: 1px solid #E2CFB3;
+  padding-bottom: 6px;
+  font-family: 'Jersey 25', sans-serif;
+  color: #584138;
+}
+
+#statsBox table {
+  width: 100%;
+  font-size: 14px;
+  margin-top: 10px;
+}
+
+#statsBox td {
+  padding: 4px 6px;
 }

@@ -20,8 +20,8 @@
       position: absolute;
       top: 20px;
       left: 20px;
-      width: 434px;              /* Figma width */
-      height: 379px;             /* Figma height */
+      width: 404px;              /* Figma width */
+      height: 359px;             /* Figma height */
       background-color: #FFF4E6; /* ✅ To-Do 상자 배경만 적용 */
       border-radius: 10px;
       padding: 20px;
@@ -30,7 +30,7 @@
     }
 
     .timer-section {
-      position: absolute;
+      position: relative;
       bottom: 40px;
       left: 50%;
       transform: translateX(-50%);
@@ -60,16 +60,6 @@
 
     button:hover {
       background-color: #dddddd;
-    }
-
-    .time-display {
-      font-size: 36px;
-      margin-top: 10px;
-      border: 3px solid #ffffff;
-      display: inline-block;
-      padding: 15px 30px;
-      border-radius: 10px;
-      background-color: #3e3e3e;
     }
 
     .status {
@@ -162,48 +152,6 @@
       color: #000;
     }
 
-    #statsBox {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    background: #333;
-    padding: 15px;
-    border-radius: 8px;
-    color: white;
-    min-width: 180px;
-
-    max-height: 0;
-    opacity: 0;
-    transition: max-height 0.4s ease, padding 0.4s ease, opacity 0.4s ease;
-  }
-  #statsBox h3 {
-    margin-top: 0;
-    font-size: 18px;
-    border-bottom: 1px solid #555;
-    padding-bottom: 5px;
-  }
-  #statsBox table {
-    width: 100%;
-    font-size: 14px;
-    margin-top: 10px;
-  }
-  #statsBox td {
-    padding: 2px 4px;
-  }
-    .top-right-btn {
-    position: fixed;
-    top: 10px;
-    right: 10px;
-    z-index: 1000;
-    padding: 8px 12px;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    font-size: 14px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-  }
   .task-item {
     font-family: 'Jersey 25', sans-serif;
     font-size: 20px;
@@ -213,8 +161,10 @@
 </head>
 <body>
 
-  <h1 style="text-align: center; padding: 20px;">Latte Learn</h1>
-
+  <img src="{{ url_for('static', filename='images/lattelearn_logo.png') }}" class="logo-image">
+  
+  <div class="right-background"></div>
+  <div class="left-background"></div>
 
   <div class="todo-section">
     <h1>Todo List</h1>
@@ -281,21 +231,57 @@
     </form>
   </div>
 
+  <div class="center-image">
+    <img src="{{ url_for('static', filename='images/espresso_machine.png') }}" alt="Espresso_Machine">
+  </div>
+  <div class="left-deco">
+    <img src="{{ url_for('static', filename='images/FlowerPlant.png') }}" alt="Flower Plant">
+  </div>
+
+  <div class="right-deco">
+    <img src="{{ url_for('static', filename='images/CupStack.png') }}" alt="Cup Stack">
+  </div>
+  <div class="right-deco-2">
+    <img src="{{ url_for('static', filename='images/Straws and Napkins.png') }}" alt="Straws and Napkins">
+  </div>
+
   <div class="timer-section">
-    <h2>공부 타이머</h2>
+    <h2 class="pomodoro-label">POMODORO</h2>
+
+    <div class="pomodoro-time" id="timerDisplay">25:00</div>
     <div class="time-inputs" id="timeInputs">
       <input type="number" id="minutes" placeholder="분" min="0" value="25"> :
       <input type="number" id="seconds" placeholder="초" min="0" max="59" value="0">
     </div>
-
     <div class="button-group">
-      <button id="startBtn">시작</button>
-      <button id="stopBtn">정지</button>
-      <button id="resetBtn">리셋</button>
+      <button id="startBtn" class="icon-button">
+  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="18" viewBox="0 0 15 18" fill="none">
+    <path d="M0.25 1.1039V16.8961C0.251716 17.0949 0.306703 17.2897 0.409233 17.46C0.511763 17.6304 0.658089 17.7702 0.832977 17.8648C1.00787 17.9594 1.20492 18.0054 1.40363 17.9981C1.60234 17.9907 1.79543 17.9302 1.96281 17.8228L14.3645 9.92671C14.5208 9.82777 14.6495 9.69093 14.7387 9.52891C14.8278 9.36688 14.8746 9.18494 14.8746 9C14.8746 8.81505 14.8278 8.63311 14.7387 8.47108C14.6495 8.30906 14.5208 8.17222 14.3645 8.07328L1.96281 0.177183C1.79543 0.0698346 1.60234 0.00931567 1.40363 0.00192782C1.20492 -0.00546003 1.00787 0.0405533 0.832977 0.135177C0.658089 0.2298 0.511763 0.369575 0.409233 0.539948C0.306703 0.710321 0.251716 0.905064 0.25 1.1039Z" fill="white"/>
+  </svg>
+      </button>
+      <button id="stopBtn" class="icon-button">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="22" viewBox="0 0 20 22" fill="none">
+    <path d="M19 0.000183105H14.0001C13.4478 0.000183105 13.0001 0.447892 13.0001 1.00017V20.9999C13.0001 21.5522 13.4478 21.9999 14.0001 21.9999H19C19.5523 21.9999 20 21.5522 20 20.9999V1.00017C20 0.447892 19.5523 0.000183105 19 0.000183105Z" fill="white"/>
+    <path d="M5.99991 0.000183105H0.999986C0.447709 0.000183105 0 0.447892 0 1.00017V20.9999C0 21.5522 0.447709 21.9999 0.999986 21.9999H5.99991C6.55219 21.9999 6.9999 21.5522 6.9999 20.9999V1.00017C6.9999 0.447892 6.55219 0.000183105 5.99991 0.000183105Z" fill="white"/>
+  </svg>
+      </button>
+      <button id="resetBtn" class="icon-button">
+<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18" fill="none">
+  <g clip-path="url(#clip0_341_302)">
+    <path d="M10 17L4 11L10 5" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M10 25H21C22.8565 25 24.637 24.2625 25.9497 22.9497C27.2625 21.637 28 19.8565 28 18C28 16.1435 27.2625 14.363 25.9497 13.0503C24.637 11.7375 22.8565 11 21 11H4" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <defs>
+    <clipPath id="clip0_341_302">
+      <rect width="32" height="32" fill="white"/>
+    </clipPath>
+  </defs>
+</svg>
+      </button>
+    </div>
     </div>
 
-    <div class="time-display" id="timerDisplay">25:00</div>
-    <div class="status" id="statusText">Work Time</div>
+    <div id="statusText">Work Time</div>
   </div>
 
   <audio id="bgMusic" loop muted autoplay>
@@ -308,11 +294,11 @@
   </button>
 
   <!-- 통계보기 토글 버튼 추가 -->
-  <button id="toggleStatsBtn" class="top-right-btn">통계 보기</button>
+  <button id="toggleStatsBtn" class="top-right-btn">Statistics</button>
 
   <!--통계 영역 (처음엔 닫힌 상태) -->
   <div id="statsBox" style="max-height: 0; overflow: hidden; transition: max-height 0.5s ease-out;">
-    <h3>공부 시간</h3>
+    <h3>Time spent</h3>
     <table id="statsTable"></table>
   </div>
 
@@ -550,12 +536,12 @@
           statsBox.style.maxHeight = "500px";
           statsBox.style.padding = "15px";        // 보이게
           statsBox.style.opacity = "1";
-          toggleBtn.textContent = "통계 닫기";
+          toggleBtn.textContent = "Statistics";
         } else {
           statsBox.style.maxHeight = "0";
           statsBox.style.padding = "0";           // 숨기기
           statsBox.style.opacity = "0";
-          toggleBtn.textContent = "통계 보기";
+          toggleBtn.textContent = "Statistics";
         }
       });
 

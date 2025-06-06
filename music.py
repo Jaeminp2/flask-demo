@@ -10,4 +10,4 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 @music_bp.route("/music")
 def music():
-    return send_file("/Users/jaeminpark/Desktop/flask-demo/music/겨울카페 분위기.mp3", mimetype='audio/mpeg', as_attachment=False)
+    return send_file("/Users/jaeminpark/Desktop/flask-demo/music/likelionproject.mp3", mimetype='audio/mpeg', as_attachment=False)
